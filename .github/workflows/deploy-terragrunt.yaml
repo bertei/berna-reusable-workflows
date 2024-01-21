@@ -5,10 +5,17 @@ on:
     inputs:
       AWS_REGION:
         required: false
-        default: "us-east-1"
+        default: us-east-1
         type: string
       IAM_ROLE_TO_ASSUME:
         required: true
+        type: string
+      ENVIRONMENT:
+        required: true
+        type: string
+      INFRA_PATH:
+        required: false
+        default: infra
         type: string
 
 jobs:
@@ -32,3 +39,13 @@ jobs:
       - name: Sts GetCallerIdentity
         run: |
           aws sts get-caller-identity
+          pwd
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Install Terragrunt
+        uses: peter-murray/terragrunt-github-action@v1.0.0
+        with:
+          terragrunt_version: 0.36.12
+      - name: Terragrunt Plan
+        run: terragrunt run-all plan -lock=false --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies -no-color
+        working-directory: ${{ github.workspace }}/${{ inputs.INFRA_PATH }}/environments/${{ inputs.ENVIRONMENT }}/
