@@ -34,6 +34,7 @@ jobs:
         run: |
           aws sts get-caller-identity
           pwd
+          echo "${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/" 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
       - name: Install Terragrunt
