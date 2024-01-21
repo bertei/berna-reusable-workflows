@@ -7,9 +7,6 @@ on:
         required: false
         default: us-east-1
         type: string
-      IAM_ROLE_TO_ASSUME:
-        required: true
-        type: string
       ENVIRONMENT:
         required: true
         type: string
@@ -32,7 +29,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ inputs.AWS_REGION }}
-          role-to-assume: ${{ inputs.IAM_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.OIDC_IAM_ROLE }}
       - name: Sts GetCallerIdentity
         run: |
           aws sts get-caller-identity
@@ -44,5 +41,5 @@ jobs:
         with:
           terragrunt_version: 0.36.12
       - name: Terragrunt Plan
-        run: terragrunt run-all plan -lock=false --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies -no-color
+        run: terragrunt plan -lock=false --terragrunt-non-interactive=true
         working-directory: ${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/
