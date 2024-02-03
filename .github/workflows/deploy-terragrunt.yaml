@@ -12,14 +12,28 @@ on:
         type: string
 
 jobs:
-  deploy:
-    name: deploy
+  directories:
+    name: Directory-changes
     runs-on: ubuntu-latest
+    steps:
+      - uses: theappnest/terraform-monorepo-action@master
+        id: directories
+        with:
+          monitored: '.hcl'
+      - run: echo ${{ steps.directories.outputs.modules }}
+    outputs:
+      dirs: ${{ steps.directories.outputs.modules }}
 
+  deploy:
+    name: Terraform-deployment
+    runs-on: ubuntu-latest
+    needs: directories
+    strategy:
+      matrix:
+        directories: ${{ fromJson(needs.directories.outputs.dirs) }}
     env:
       AWS_REGION: ${{ inputs.AWS_REGION }}
       ENV: ${{ inputs.ENVIRONMENT }}
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,11 +44,6 @@ jobs:
         with:
           aws-region: ${{ inputs.AWS_REGION }}
           role-to-assume: ${{ secrets.OIDC_IAM_ROLE }}
-      - name: Sts GetCallerIdentity
-        run: |
-          aws sts get-caller-identity
-          pwd
-          echo "${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/" 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
       - name: Install Terragrunt
@@ -43,4 +52,5 @@ jobs:
           terragrunt_version: 0.36.12
       - name: Terragrunt Plan
         run: terragrunt plan -lock=false --terragrunt-non-interactive=true
-        working-directory: ${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/
+        working-directory: ${{ matrix.directories }}
+        #working-directory: ${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/
