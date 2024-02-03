@@ -51,6 +51,6 @@ jobs:
         with:
           terragrunt_version: 0.36.12
       - name: Terragrunt Plan
-        run: terragrunt plan -lock=false
+        run: terragrunt plan -lock=false --terragrunt-non-interactive
         working-directory: ${{ matrix.directories }}
         #working-directory: ${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/
