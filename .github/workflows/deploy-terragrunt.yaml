@@ -12,25 +12,31 @@ on:
         type: string
 
 jobs:
-  directories:
-    name: Directory-changes
+  check-file-changes:
+    name: Create JSON_Matrix with changed files path
     runs-on: ubuntu-latest
     steps:
-      - uses: theappnest/terraform-monorepo-action@master
-        id: directories
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          monitored: '.hcl'
-      - run: echo ${{ steps.directories.outputs.modules }}
+          fetch-depth: 0
+      - name: Create JSON
+        id: json
+        run: |
+          output_json=$(./create_json.sh $${{inputs.ENVIRONMENT }})
+          echo "json_matrix=$output_json" >> "$GITHUB_OUTPUT"
+          echo "$output_json"
     outputs:
-      dirs: ${{ steps.directories.outputs.modules }}
+      json_matrix: ${{ steps.json.outputs.json_matrix }}
 
   deploy:
-    name: Terraform-deployment
+    name: Deploy AWS via Terragrunt
     runs-on: ubuntu-latest
-    needs: directories
+    needs: check-file-changes
     strategy:
+      fail-fast: false
       matrix:
-        directories: ${{ fromJson(needs.directories.outputs.dirs) }}
+        directories: ${{ fromJson(needs.check-file-changes.outputs.json_matrix) }}
     env:
       AWS_REGION: ${{ inputs.AWS_REGION }}
       ENV: ${{ inputs.ENVIRONMENT }}
@@ -52,5 +58,5 @@ jobs:
           terragrunt_version: 0.36.12
       - name: Terragrunt Plan
         run: terragrunt plan -lock=false --terragrunt-non-interactive
-        working-directory: ${{ matrix.directories }}
-        #working-directory: ${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/
+        working-directory: ${{ github.workspace }}/${{ matrix.targets }}
+        #working-directory: ${{ github.workspace }}/infra/environments/${{ inputs.ENVIRONMENT }}/ ${{ matrix.directories }}
