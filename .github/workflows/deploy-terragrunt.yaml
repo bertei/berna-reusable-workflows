@@ -35,8 +35,7 @@ jobs:
     needs: check-file-changes
     strategy:
       fail-fast: false
-      matrix:
-        directories: ${{ fromJson(needs.check-file-changes.outputs.json_matrix) }}
+      matrix: ${{ fromJson(needs.check-file-changes.outputs.json_matrix) }}
     env:
       AWS_REGION: ${{ inputs.AWS_REGION }}
       ENV: ${{ inputs.ENVIRONMENT }}
