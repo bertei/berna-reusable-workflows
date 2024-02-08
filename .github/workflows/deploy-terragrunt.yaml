@@ -23,7 +23,7 @@ jobs:
       - name: Create JSON
         id: json
         run: |
-          output_json=$(./create_json.sh $${{inputs.ENVIRONMENT }})
+          output_json=$(./create_json.sh ${{ inputs.ENVIRONMENT }})
           echo "json_matrix=$output_json" >> "$GITHUB_OUTPUT"
           echo "$output_json"
     outputs:
