@@ -52,9 +52,9 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
       - name: Install Terragrunt
-        uses: peter-murray/terragrunt-github-action@v1.0.0
+        uses: userbradley/action-install-terragrunt@v1.1.1
         with:
-          terragrunt_version: 0.36.12
+          version: "0.54.12"
       - name: Terragrunt Plan
         run: terragrunt plan -lock=false --terragrunt-non-interactive
         working-directory: ${{ matrix.targets }}
