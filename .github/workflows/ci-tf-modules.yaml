@@ -1,0 +1,66 @@
+name: ci-tf-modules
+
+on:
+  workflow_call:
+    inputs:
+      tf_fmt:
+        required: false
+        default: false
+        type: boolean
+      add_tf_fmt:
+        required: false
+        default: false
+        type: boolean
+      render_readme:
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+    directories:
+      name: Output modified files
+      runs-on: ubuntu-latest
+      steps:
+        - uses: theappnest/terraform-monorepo-action@master
+          id: directories
+          with:
+            monitored: '.tf'
+        - run: echo ${{ steps.directories.outputs.modules }}
+      outputs:
+        dirs: ${{ steps.directories.outputs.modules }}
+
+    ci-terraform:
+      needs: directories
+      runs-on: ubuntu-latest
+      name: Terraform fmt & Render README
+      strategy:
+        matrix:
+          dir-matrix: ${{ fromJson(needs.directories.outputs.dirs) }}
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+          with:
+           fetch-depth: 0
+           ref: ${{ github.event.pull_request.head.ref }}
+
+        - name: Execute 'terraform fmt'
+          if: ${{ inputs.tf_fmt }}
+          uses: dflook/terraform-fmt@v1
+          with:
+           path: ${{ matrix.dir-matrix }}
+
+        - name: Add & Commit 'terraform fmt' changes into PR
+          if: ${{ inputs.add_tf_fmt }}
+          uses: EndBug/add-and-commit@v9
+          with:
+            add: '.'
+            message: 'Add formatted terraform files.'
+
+        - name: Render terraform docs inside the README.md and push changes back to PR branch
+          if: ${{ inputs.render_readme }}
+          uses: terraform-docs/gh-actions@v1.0.0
+          with:
+            find-dir: ${{ matrix.dir-matrix }}
+            output-file: README.md
+            output-method: inject
+            git-push: "true"
